@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      background-color: #f2f2f2;
+    }
+
+    .input-container {
+      width: 500px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+    }
+    .input-row {
+      display: flex;
+      justify-content: flex-start;
+      margin-bottom: 5px;
+    }
+    .input-item {
+      margin: 5px;
+    }
+    #result {
+      margin-top: 20px;
+      font-weight: bold;
+      color: #008CBA;
+      display: none;
+    }
+
+    #result1 {
+      margin-top: 20px;
+      font-weight: bold;
+      color: #008CBA;
+      display: none;
+    }
+
+    #result2 {
+      margin-top: 20px;
+      font-weight: bold;
+      color: #008CBA;
+      display: none;
+    }
+   
+  </style>
+  <title>생년월일 계산기 및 음력/양력 변환기</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/moment-lunar"></script>
+  <script src="https://apis.google.com/js/api.js"></script>
+</head>
+<body>
+  
+  <div class="input-container">
+    <h1>나의 소울넘버</h1>
+    <h4>양력생일만 가능</h4>
+    <div class="input-row">
+      <label class="input-item" for="name">이름:</label>
+      <input class="input-item" type="text" id="name" name="name" placeholder="이름을 입력하세요">
+    </div>
+    <div class="input-row">
+      <label class="input-item" for="year">년:</label>
+      <select class="input-item" id="year" name="year"></select>
+      <label class="input-item" for="month">월:</label>
+      <select class="input-item" id="month" name="month"></select>
+      <label class="input-item" for="day">일:</label>
+      <select class="input-item" id="day" name="day"></select>
+        <br>
+    <button onclick="calculate()">계산하기</button>
+</div>
+    <div id="result">
+      <div>나의 소울넘버 : <span id="outputSoulNumber"></span></div>
+    </div>
+  </div>
+
+  <div class="input-container">
+    <h1>음력생일 양력변환</h1>
+    <div class="input-row">
+      <label class="input-item" for="lunarYear">년:</label>
+      <select class="input-item" id="lunarYear" name="lunarYear"></select>
+      <label class="input-item" for="lunarMonth">월:</label>
+      <select class="input-item" id="lunarMonth" name="lunarMonth"></select>
+      <label class="input-item" for="lunarDay">일:</label>
+      <select class="input-item" id="lunarDay" name="lunarDay"></select>
+       <br>
+    <button onclick="convertLunarToSolar()">변환하기</button>
+</div>
+   
+    <div id="result1" class="result"></div>
+  </div>
+
+  <div class="input-container">
+    <h1>양력생일 음력변환</h1>
+    <div class="input-row">
+      <label class="input-item" for="solarYear">년:</label>
+      <select class="input-item" id="solarYear" name="solarYear"></select>
+      <label class="input-item" for="solarMonth">월:</label>
+      <select class="input-item" id="solarMonth" name="solarMonth"></select>
+      <label class="input-item" for="solarDay">일:</label>
+      <select class="input-item" id="solarDay" name="solarDay"></select>
+        <br>
+    <button onclick="convertSolarToLunar()">변환하기</button>
+</div>
+    <p id="result2"></p>
+  </div>
+
+  <script>
+    function fillOptions(id, start, end) {
+      const select = document.getElementById(id);
+      for (let i = start; i <= end; i++) {
+        const option = document.createElement("option");
+        option.text = i;
+        option.value = i;
+        select.add(option);
+      }
+    }
+
+    fillOptions("year", 1900, new Date().getFullYear());
+    fillOptions("month", 1, 12);
+    fillOptions("day", 1, 31);
+
+    fillOptions("lunarYear", 1900, new Date().getFullYear());
+    fillOptions("lunarMonth", 1, 12);
+    fillOptions("lunarDay", 1, 30);
+
+    fillOptions("solarYear", 1900, new Date().getFullYear());
+    fillOptions("solarMonth", 1, 12);
+    fillOptions("solarDay", 1, 31);
+
+    function calculate() {
+      const name = document.getElementById("name").value;
+      const year = parseInt(document.getElementById("year").value);
+      const month = parseInt(document.getElementById("month").value);
+      const day = parseInt(document.getElementById("day").value);
+
+      let sum = year + month + day;
+
+      while (sum >= 10) {
+        sum = sum
+        .toString()
+        .split("")
+        .reduce((acc, curr) => parseInt(acc) + parseInt(curr));
+      }
+
+      document.getElementById("outputSoulNumber").innerText = sum;
+
+      // 결과값을 표시
+      document.getElementById("result").style.display = "block";
+
+      // Save the result to Google Sheets
+      appendDataToSheet("Sheet1", [name, sum]);
+    }
+
+    function convertLunarToSolar() {
+      const lunarYear = parseInt(document.getElementById('lunarYear').value);
+      const lunarMonth = parseInt(document.getElementById('lunarMonth').value);
+      const lunarDay = parseInt(document.getElementById('lunarDay').value);
+
+      const lunarDate = moment().year(lunarYear).month(lunarMonth -1 ).date(lunarDay);
+      const solarDate = lunarDate.solar();
+
+      document.getElementById('result1').innerText = `양력 날짜: ${solarDate.format('YYYY-MM-DD')}`;
+
+      // 결과값을 표시
+      document.getElementById("result1").style.display = "block";
+
+            // Save the result to Google Sheets
+            appendDataToSheet("Sheet1", [ solarDate.format('YYYY-MM-DD')]);
+    }
+
+    function convertSolarToLunar() {
+      const solarYear = parseInt(document.getElementById('solarYear').value);
+      const solarMonth = parseInt(document.getElementById('solarMonth').value);
+      const solarDay = parseInt(document.getElementById('solarDay').value);
+
+      const solarDate = moment().year(solarYear).month(solarMonth - 1).date(solarDay);
+      const lunarDate = solarDate.lunar();
+
+      document.getElementById('result2').innerText = `음력 날짜: ${lunarDate.format('YYYY-MM-DD')}`;
+
+      // 결과값을 표시
+      document.getElementById("result2").style.display = "block";
+
+      // Save the result to Google Sheets
+      appendDataToSheet("Sheet1", [ lunarDate.format('YYYY-MM-DD')]);
+    }
+
+    // Google Sheets API 설정
+    function initClient() {
+      gapi.client.init({
+        apiKey: 'AIzaSyCrIAcGXP72CUoVcBnU0lsnkoXO_D1Lp3E',
+        clientId: 'ksj5796@gmail.com',
+        scope: 'https://www.googleapis.com/auth/spreadsheets',
+        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4']
+      });
+    }
+
+    // 데이터를 구글 시트에 추가
+    function appendDataToSheet(sheetName, data) {
+      gapi.client.sheets.spreadsheets.values.append({
+        spreadsheetId: '1eN6LBiImw9LI_grLftBlEwTU-UHBYQl11pqQCq4Mzpw',
+        range: sheetName + '!A1',
+        valueInputOption: 'USER_ENTERED',
+        insertDataOption: 'INSERT_ROWS',
+        resource: {
+          values: [data]
+        }
+      }).then((response) => {
+        console.log(response.result);
+      }, (reason) => {
+        console.error('error: ' + reason.result.error.message);
+      });
+    }
+
+    // 구글 API 라이브러리를 로드
+    gapi.load('client', initClient);
+  </script>
+</body>
+</html>
